@@ -521,8 +521,18 @@
                             </pluginExecutions>
                         </lifecycleMappingMetadata>
                     </configuration>
-                </plugin>
-            </plugins>
+				</plugin>
+					<plugin>
+						<groupId>org.simplify4u.plugins</groupId>
+						<artifactId>pgpverify-maven-plugin</artifactId>
+						<version>1.9.0</version>
+				
+						<configuration>
+							<failNoSignature>true</failNoSignature>
+							<disableChecksum>true</disableChecksum>>
+						</configuration>
+				</plugin>
+			</plugins>
         </pluginManagement>
     </build>
 
