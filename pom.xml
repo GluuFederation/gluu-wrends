@@ -522,14 +522,19 @@
                         </lifecycleMappingMetadata>
                     </configuration>
                 </plugin>
-                <plugin>
-				    <groupId>org.apache.maven.plugins</groupId>
-				    <artifactId>maven-gpg-plugin</artifactId>
-				    <configuration>
-				        <skip>true</skip>
-				    </configuration>
-                </plugin>
-                
+				<dependency>
+					<groupId>junit</groupId>
+					<artifactId>junit</artifactId>
+					<verification>
+						<openpgp>
+						com.fasterxml.jackson.core:jackson-annotations:2.11.2=0x8D7F1BEC1E2ECAE7
+						com.fasterxml.jackson.core:jackson-core:2.11.2=0x8D7F1BEC1E2ECAE7
+						com.fasterxml.jackson.core:jackson-databind:2.11.2=0x8D7F1BEC1E2ECAE7
+						com.fasterxml.jackson.module:jackson-module-jsonSchema:2.11.2=0x8D7F1BEC1E2ECAE7
+						</openpgp>
+					</verification>
+				</dependency>
+
             </plugins>
         </pluginManagement>
     </build>
