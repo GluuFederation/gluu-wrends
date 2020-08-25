@@ -133,6 +133,8 @@ import org.opends.server.types.Entry;
 import org.opends.server.types.InitializationException;
 import org.opends.server.types.LDIFImportConfig;
 import org.opends.server.types.LDIFImportResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.forgerock.opendj.util.OperatingSystem;
 import com.forgerock.opendj.util.PackedLong;
@@ -155,6 +157,9 @@ final class OnDiskMergeImporter
   private static final String DEFAULT_TMP_DIR = "import-tmp";
 
   private static final LocalizedLogger logger = LocalizedLogger.getLoggerForThisClass();
+  
+  public static final boolean DEBUG = true;
+  public static final Logger debugLogger = LoggerFactory.getLogger(OnDiskMergeImporter.class);
 
   /**
    * Shim that allows properly constructing an {@link OnDiskMergeImporter} without polluting {@link ImportStrategy} and
@@ -174,6 +179,7 @@ final class OnDiskMergeImporter
 
     /** Small heap threshold used to give more memory to JVM to attempt OOM errors. */
     private static final int SMALL_HEAP_SIZE = 256 * MB;
+    
 
     private static final Predicate<Tree, Void> IS_VLV = new Predicate<Tree, Void>()
     {
@@ -207,6 +213,12 @@ final class OnDiskMergeImporter
           ? getDefaultNumberOfThread()
           : importConfig.getThreadCount();
       final int nbBuffersPerThread = 2 * getIndexCount();
+      if (DEBUG) {
+    	  debugLogger.info("importLDIF: getDefaultNumberOfThread(): {}", getDefaultNumberOfThread());
+    	  debugLogger.info("importLDIF: importConfig.getThreadCount(): {}", importConfig.getThreadCount());
+    	  debugLogger.info("importLDIF: nbBuffersPerThread: {}", nbBuffersPerThread);
+    	  debugLogger.info("importLDIF: maxThreadCount: {}", maxThreadCount);
+      }
       try (final BufferPool bufferPool = newBufferPool(maxThreadCount, nbBuffersPerThread))
       {
         final int threadCount = bufferPool.size() / nbBuffersPerThread;
@@ -391,9 +403,18 @@ final class OnDiskMergeImporter
       long memoryAvailable =
           useOffHeap ? offheapMemorySize.longValue() : calculateAvailableHeapMemoryForBuffersAfterGC();
       int threadCount = initialThreadCount;
+      if (DEBUG) {
+    	  debugLogger.info("newBufferPool: initialThreadCount: {}", initialThreadCount);
+    	  debugLogger.info("newBufferPool: offheapMemorySize: {}", offheapMemorySize);
+    	  debugLogger.info("newBufferPool: useOffHeap: {}", useOffHeap);
+    	  debugLogger.info("newBufferPool: memoryAvailable: {}", memoryAvailable);
+      }
       for (;;)
       {
         final int nbRequiredBuffers = threadCount * nbBuffers;
+        if (DEBUG) {
+      	  debugLogger.info("newBufferPool: nbRequiredBuffers: {}", nbRequiredBuffers);
+        }
         try
         {
           return useOffHeap
@@ -454,8 +475,18 @@ final class OnDiskMergeImporter
         throws InitializationException
     {
       final long minimumRequiredMemory = nbBuffers * MIN_BUFFER_SIZE + DB_CACHE_SIZE + REQUIRED_FREE_MEMORY;
+      if (DEBUG) {
+      	  debugLogger.info("newBufferPool: nbBuffers: {}", nbBuffers);
+      	  debugLogger.info("newBufferPool: MIN_BUFFER_SIZE: {}", MIN_BUFFER_SIZE);
+      	  debugLogger.info("newBufferPool: DB_CACHE_SIZE: {}", DB_CACHE_SIZE);
+      	  debugLogger.info("newBufferPool: REQUIRED_FREE_MEMORY: {}", REQUIRED_FREE_MEMORY);
+      	  debugLogger.info("newBufferPool: minimumRequiredMemory: {}", minimumRequiredMemory);
+      }
       if (heapMemoryAvailable < minimumRequiredMemory)
       {
+          if (DEBUG) {
+          	  debugLogger.info("newBufferPool: throw InitializationException");
+          }
         // Not enough memory.
         throw new InitializationException(ERR_IMPORT_LDIF_LACK_MEM.get(heapMemoryAvailable, minimumRequiredMemory));
       }
@@ -463,6 +494,10 @@ final class OnDiskMergeImporter
       final long buffersMemory = heapMemoryAvailable - DB_CACHE_SIZE - REQUIRED_FREE_MEMORY;
       final int bufferSize = Math.min(((int) (buffersMemory / nbBuffers)), MAX_BUFFER_SIZE);
       logger.info(NOTE_IMPORT_LDIF_DB_MEM_BUF_INFO, DB_CACHE_SIZE, bufferSize);
+      if (DEBUG) {
+      	  debugLogger.info("newBufferPool: buffersMemory: {}", buffersMemory);
+      	  debugLogger.info("newBufferPool: bufferSize: {}", bufferSize);
+      }
       return new BufferPool(nbBuffers, bufferSize, false);
     }
 
@@ -955,6 +990,7 @@ final class OnDiskMergeImporter
   private static final int DB_CACHE_SIZE = 32 * MB;
   /** Required free memory for this importer. */
   private static final int REQUIRED_FREE_MEMORY = 50 * MB;
+
   /** LDIF reader. */
   /** Map of DNs to Suffix objects. */
   private final AbstractTwoPhaseImportStrategy importStrategy;
@@ -2885,6 +2921,11 @@ final class OnDiskMergeImporter
       {
         for (int i = 0; i < nbBuffer; i++)
         {
+        if (OnDiskMergeImporter.DEBUG) {
+        	  debugLogger.info("BufferPool: i: {}", i);
+        	  debugLogger.info("BufferPool: allocateDirect: {}", allocateDirect);
+        	  debugLogger.info("BufferPool: bufferSize: {}", bufferSize);
+        }
           pool.offer(new MemoryBuffer(allocateDirect
                           ? ByteBuffer.allocateDirect(bufferSize)
                           : ByteBuffer.allocate(bufferSize)));
