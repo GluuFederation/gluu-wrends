@@ -656,7 +656,7 @@ final class OnDiskMergeImporter
      * Calculates the amount of available memory which can be used by this import, taking into account whether
      * the import is running offline or online as a task.
      */
-    public static long calculateAvailableHeapMemoryForBuffersAfterGC()
+    private long calculateAvailableHeapMemoryForBuffersAfterGC()
     {
       final Runtime runTime = Runtime.getRuntime();
       runTime.gc();
@@ -686,6 +686,7 @@ final class OnDiskMergeImporter
 
       return runtimeMemory;
     }
+  }
 
   /** Source of LDAP {@link Entry}s to process. */
   private interface Source extends Closeable
