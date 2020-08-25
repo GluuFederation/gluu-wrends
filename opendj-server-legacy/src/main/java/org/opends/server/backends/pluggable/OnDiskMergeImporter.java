@@ -2933,6 +2933,9 @@ final class OnDiskMergeImporter
       }
       catch (OutOfMemoryError e)
       {
+          if (OnDiskMergeImporter.DEBUG) {
+        	  debugLogger.info("newBufferPool: OutOfMemoryError", e);
+          }
         close();
         throw e;
       }
