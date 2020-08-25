@@ -655,13 +655,14 @@ final class OnDiskMergeImporter
      * Calculates the amount of available memory which can be used by this import, taking into account whether
      * the import is running offline or online as a task.
      */
-    private long calculateAvailableHeapMemoryForBuffersAfterGC()
+    public static long calculateAvailableHeapMemoryForBuffersAfterGC()
     {
       final Runtime runTime = Runtime.getRuntime();
       runTime.gc();
       runTime.gc();
 
       // First try calculation based on oldgen size
+      long availableHeapSize = 0;
       final List<MemoryPoolMXBean> mpools = ManagementFactory.getMemoryPoolMXBeans();
       for (final MemoryPoolMXBean mpool : mpools)
       {
@@ -669,13 +670,21 @@ final class OnDiskMergeImporter
         if (usage != null && mpool.getName().endsWith("Old Gen") && usage.getMax() > 0)
         {
           final long max = usage.getMax();
-          return (max > SMALL_HEAP_SIZE ? (max * 90 / 100) : (max * 70 / 100));
+          
+          // Use 70 % of max - used  - static limit
+          availableHeapSize = max * 70 / 100  - usage.getUsed() - 30 * 1024 * 1024;
         }
       }
       // Fall back to 40% of overall heap size (no need to do gc() again).
-      return (runTime.freeMemory() + (runTime.maxMemory() - runTime.totalMemory())) * 40 / 100;
+      long runtimeMemory = (runTime.freeMemory() + (runTime.maxMemory() - runTime.totalMemory())) * 40 / 100;
+
+      if (availableHeapSize > 0) {
+    	  // Provide maximum allowed by both methods
+    	  return Math.max(availableHeapSize, runtimeMemory);
+      }
+
+      return runtimeMemory;
     }
-  }
 
   /** Source of LDAP {@link Entry}s to process. */
   private interface Source extends Closeable
