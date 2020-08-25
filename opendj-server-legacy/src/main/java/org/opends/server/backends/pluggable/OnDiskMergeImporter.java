@@ -159,7 +159,6 @@ final class OnDiskMergeImporter
   private static final LocalizedLogger logger = LocalizedLogger.getLoggerForThisClass();
   
   public static final boolean DEBUG = true;
-  public static final Logger debugLogger = LoggerFactory.getLogger(OnDiskMergeImporter.class);
 
   /**
    * Shim that allows properly constructing an {@link OnDiskMergeImporter} without polluting {@link ImportStrategy} and
@@ -214,10 +213,10 @@ final class OnDiskMergeImporter
           : importConfig.getThreadCount();
       final int nbBuffersPerThread = 2 * getIndexCount();
       if (DEBUG) {
-    	  debugLogger.info("importLDIF: getDefaultNumberOfThread(): {}", getDefaultNumberOfThread());
-    	  debugLogger.info("importLDIF: importConfig.getThreadCount(): {}", importConfig.getThreadCount());
-    	  debugLogger.info("importLDIF: nbBuffersPerThread: {}", nbBuffersPerThread);
-    	  debugLogger.info("importLDIF: maxThreadCount: {}", maxThreadCount);
+    	  System.out.println("importLDIF: getDefaultNumberOfThread(): " + getDefaultNumberOfThread());
+    	  System.out.println("importLDIF: importConfig.getThreadCount():" + importConfig.getThreadCount());
+    	  System.out.println("importLDIF: nbBuffersPerThread: " + nbBuffersPerThread);
+    	  System.out.println("importLDIF: maxThreadCount: " + maxThreadCount);
       }
       try (final BufferPool bufferPool = newBufferPool(maxThreadCount, nbBuffersPerThread))
       {
@@ -404,16 +403,18 @@ final class OnDiskMergeImporter
           useOffHeap ? offheapMemorySize.longValue() : calculateAvailableHeapMemoryForBuffersAfterGC();
       int threadCount = initialThreadCount;
       if (DEBUG) {
-    	  debugLogger.info("newBufferPool: initialThreadCount: {}", initialThreadCount);
-    	  debugLogger.info("newBufferPool: offheapMemorySize: {}", offheapMemorySize);
-    	  debugLogger.info("newBufferPool: useOffHeap: {}", useOffHeap);
-    	  debugLogger.info("newBufferPool: memoryAvailable: {}", memoryAvailable);
+    	  System.out.println("newBufferPool: initialThreadCount: " + initialThreadCount);
+    	  if (offheapMemorySize != null) {
+    		  System.out.println("newBufferPool: offheapMemorySize: " + offheapMemorySize);
+    	  }
+    	  System.out.println("newBufferPool: useOffHeap: " + useOffHeap);
+    	  System.out.println("newBufferPool: memoryAvailable: " + memoryAvailable);
       }
       for (;;)
       {
         final int nbRequiredBuffers = threadCount * nbBuffers;
         if (DEBUG) {
-      	  debugLogger.info("newBufferPool: nbRequiredBuffers: {}", nbRequiredBuffers);
+        	System.out.println("newBufferPool: nbRequiredBuffers: " + nbRequiredBuffers);
         }
         try
         {
@@ -476,16 +477,16 @@ final class OnDiskMergeImporter
     {
       final long minimumRequiredMemory = nbBuffers * MIN_BUFFER_SIZE + DB_CACHE_SIZE + REQUIRED_FREE_MEMORY;
       if (DEBUG) {
-      	  debugLogger.info("newBufferPool: nbBuffers: {}", nbBuffers);
-      	  debugLogger.info("newBufferPool: MIN_BUFFER_SIZE: {}", MIN_BUFFER_SIZE);
-      	  debugLogger.info("newBufferPool: DB_CACHE_SIZE: {}", DB_CACHE_SIZE);
-      	  debugLogger.info("newBufferPool: REQUIRED_FREE_MEMORY: {}", REQUIRED_FREE_MEMORY);
-      	  debugLogger.info("newBufferPool: minimumRequiredMemory: {}", minimumRequiredMemory);
+    	  System.out.println("newBufferPool: nbBuffers: " + nbBuffers);
+    	  System.out.println("newBufferPool: MIN_BUFFER_SIZE: " + MIN_BUFFER_SIZE);
+    	  System.out.println("newBufferPool: DB_CACHE_SIZE: " + DB_CACHE_SIZE);
+    	  System.out.println("newBufferPool: REQUIRED_FREE_MEMORY: " + REQUIRED_FREE_MEMORY);
+    	  System.out.println("newBufferPool: minimumRequiredMemory: " + minimumRequiredMemory);
       }
       if (heapMemoryAvailable < minimumRequiredMemory)
       {
           if (DEBUG) {
-          	  debugLogger.info("newBufferPool: throw InitializationException");
+        	  System.out.println("newBufferPool: throw InitializationException");
           }
         // Not enough memory.
         throw new InitializationException(ERR_IMPORT_LDIF_LACK_MEM.get(heapMemoryAvailable, minimumRequiredMemory));
@@ -495,8 +496,8 @@ final class OnDiskMergeImporter
       final int bufferSize = Math.min(((int) (buffersMemory / nbBuffers)), MAX_BUFFER_SIZE);
       logger.info(NOTE_IMPORT_LDIF_DB_MEM_BUF_INFO, DB_CACHE_SIZE, bufferSize);
       if (DEBUG) {
-      	  debugLogger.info("newBufferPool: buffersMemory: {}", buffersMemory);
-      	  debugLogger.info("newBufferPool: bufferSize: {}", bufferSize);
+    	  System.out.println("newBufferPool: buffersMemory: " + buffersMemory);
+    	  System.out.println("newBufferPool: bufferSize: " + bufferSize);
       }
       return new BufferPool(nbBuffers, bufferSize, false);
     }
@@ -2922,9 +2923,9 @@ final class OnDiskMergeImporter
         for (int i = 0; i < nbBuffer; i++)
         {
         if (OnDiskMergeImporter.DEBUG) {
-        	  debugLogger.info("BufferPool: i: {}", i);
-        	  debugLogger.info("BufferPool: allocateDirect: {}", allocateDirect);
-        	  debugLogger.info("BufferPool: bufferSize: {}", bufferSize);
+        	System.out.println("BufferPool: i: " + i);
+        	System.out.println("BufferPool: allocateDirect: " + allocateDirect);
+        	System.out.println("BufferPool: bufferSize: " + bufferSize);
         }
           pool.offer(new MemoryBuffer(allocateDirect
                           ? ByteBuffer.allocateDirect(bufferSize)
@@ -2934,7 +2935,8 @@ final class OnDiskMergeImporter
       catch (OutOfMemoryError e)
       {
           if (OnDiskMergeImporter.DEBUG) {
-        	  debugLogger.info("newBufferPool: OutOfMemoryError", e);
+        	  System.out.println("newBufferPool: OutOfMemoryError");
+        	  e.printStackTrace();
           }
         close();
         throw e;
