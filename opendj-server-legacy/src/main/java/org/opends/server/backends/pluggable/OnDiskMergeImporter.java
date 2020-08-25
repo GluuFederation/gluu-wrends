@@ -158,7 +158,8 @@ final class OnDiskMergeImporter
 
   private static final LocalizedLogger logger = LocalizedLogger.getLoggerForThisClass();
   
-  public static final boolean DEBUG = true;
+  public static final boolean DEBUG = false;
+  public static final boolean DEBUG_OUT_OF_MEMORY = true;
 
   /**
    * Shim that allows properly constructing an {@link OnDiskMergeImporter} without polluting {@link ImportStrategy} and
@@ -2943,7 +2944,7 @@ final class OnDiskMergeImporter
       }
       catch (OutOfMemoryError e)
       {
-          if (OnDiskMergeImporter.DEBUG) {
+          if (OnDiskMergeImporter.DEBUG_OUT_OF_MEMORY) {
         	  System.out.println("newBufferPool: OutOfMemoryError");
         	  e.printStackTrace();
           }
